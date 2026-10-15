@@ -4435,9 +4435,15 @@ public class ClientModeImpl extends StateMachine implements ClientMode {
                     return;
                 }
 
-                if (mDeviceConfigFacade.isHandleRssiOrganicKernelFailuresEnabled()) {
+                // On MLO, an L3-only refresh can't recover a firmware-side unicast RX stall;
+                // fall back to the legacy disconnect so autojoin re-associates.
+                if (mDeviceConfigFacade.isHandleRssiOrganicKernelFailuresEnabled() && !isMlo()) {
                     processIpReachabilityFailure(lossInfo.reason);
                 } else {
+                    if (isMlo()) {
+                        Log.i(getTag(), "IP reachability failure, reconnecting: isMlo=true"
+                                + " reason=" + lossInfo.reason);
+                    }
                     processLegacyIpReachabilityLost(lossInfo.reason);
                 }
                 break;
